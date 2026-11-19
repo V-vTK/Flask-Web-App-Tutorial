@@ -36,12 +36,12 @@ Firewall: open TCP `HOST_PORT` (default 5001), or 80/443 if you put a TLS revers
 
 | Volume | Mount | Contents |
 |---|---|---|
-| `10_app-data` (compose name `app-data`; prefix is the project/directory name) | `/app/instance` | SQLite database (all users and notes) |
+| `11_app-data` (compose name `app-data`; prefix is the project name) | `/app/instance` | SQLite database (all users and notes) |
 
 Backup:
 
 ```bash
-docker run --rm -v 10_app-data:/data -v "$PWD":/backup busybox \
+docker run --rm -v 11_app-data:/data -v "$PWD":/backup busybox \
   tar czf /backup/app-data-$(date +%F).tgz -C /data .
 ```
 
