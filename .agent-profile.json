@@ -114,6 +114,36 @@
       "id": "http-errors",
       "kind": "backend",
       "description": "Unknown route 404, wrong method 405, static index.js served"
+    },
+    {
+      "id": "note-edge-cases",
+      "kind": "backend",
+      "description": "Whitespace-only, long, unicode notes are accepted and round-trip; failed note POST stores nothing"
+    },
+    {
+      "id": "delete-note-edge",
+      "kind": "backend",
+      "description": "delete-note: anonymous request is 500, unknown id returns {}, deletes only the target note, no flash, GET is 405"
+    },
+    {
+      "id": "auth-edge",
+      "kind": "backend",
+      "description": "Failed login/sign-up does not authenticate or set remember_token; login ignores ?next; email lookup case-sensitive; logout clears session"
+    },
+    {
+      "id": "home-html",
+      "kind": "frontend",
+      "description": "Home page markup: title, Notes heading, nav ids, empty #notes list, textarea#note, Add Note button, note list items with deleteNote buttons, dismissible alerts"
+    },
+    {
+      "id": "form-placeholders",
+      "kind": "frontend",
+      "description": "Login and sign-up inputs carry the original placeholders; nav ids login/signUp"
+    },
+    {
+      "id": "route-edge",
+      "kind": "backend",
+      "description": "Trailing-slash 404, OPTIONS on /login, missing static file 404"
     }
   ],
   "layers": [
@@ -140,7 +170,11 @@
         "flash-categories",
         "signup-precedence",
         "auth-cookies",
-        "http-errors"
+        "http-errors",
+        "note-edge-cases",
+        "delete-note-edge",
+        "auth-edge",
+        "route-edge"
       ]
     },
     {
@@ -163,7 +197,9 @@
       "command": ".agent-venv/bin/pytest .agent-tests/html",
       "covers": [
         "login-page",
-        "signup-page"
+        "signup-page",
+        "home-html",
+        "form-placeholders"
       ]
     }
   ],

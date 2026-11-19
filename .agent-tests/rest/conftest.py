@@ -51,13 +51,9 @@ def client():
 def registered():
     """Register a user via the API. Returns (email, signup_response).
 
-    Skips dependents if the service cannot create accounts at all (HTTP 5xx),
-    which is the known deployment bug being fixed in a later step.
     """
     email = new_email()
     r = Client().signup(email)
-    if r.status_code >= 500:
-        pytest.skip("sign-up currently fails with HTTP %d (known hashing bug)" % r.status_code)
     assert r.status_code == 302
     return email
 
