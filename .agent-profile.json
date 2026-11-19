@@ -4,8 +4,8 @@
     "backend"
   ],
   "run": {
-    "install": "python3 -m venv .agent-venv && .agent-venv/bin/pip install -q -r requirements.txt pytest requests pytest-playwright beautifulsoup4 && .agent-venv/bin/playwright install chromium",
-    "start": ".agent-venv/bin/flask --app main run --host 0.0.0.0 --port $PORT",
+    "install": "npm ci && npm run build && python3 -m venv .agent-venv && .agent-venv/bin/pip install -q pytest requests pytest-playwright beautifulsoup4 && .agent-venv/bin/playwright install chromium",
+    "start": "node dist/server.js",
     "port": 5001,
     "healthPath": "/login"
   },
@@ -144,6 +144,16 @@
       "id": "route-edge",
       "kind": "backend",
       "description": "Trailing-slash 404, OPTIONS on /login, missing static file 404"
+    },
+    {
+      "id": "remember-cookie",
+      "kind": "backend",
+      "description": "remember_token alone authenticates; tampered token rejected; logout invalidates it; cookies HttpOnly"
+    },
+    {
+      "id": "error-edge-2",
+      "kind": "backend",
+      "description": "Malformed/missing-id delete-note and missing sign-up fields give 500; unicode length counted in characters; next param encoded; 405 Allow headers; content types; static index.js content; note POST renders 200 and consumes flash"
     }
   ],
   "layers": [
@@ -174,7 +184,9 @@
         "note-edge-cases",
         "delete-note-edge",
         "auth-edge",
-        "route-edge"
+        "route-edge",
+        "remember-cookie",
+        "error-edge-2"
       ]
     },
     {

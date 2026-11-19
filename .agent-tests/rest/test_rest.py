@@ -413,3 +413,113 @@ def test_head_and_options_and_trailing_slash(client):
 
 def test_static_missing_file_404(client):
     assert client.get("/static/nope.js").status_code == 404
+
+
+# ---- gap-review round 1 ----
+def _cookie(c, name):
+    return next((ck for ck in c.s.cookies if ck.name == name), None)
+
+
+def test_remember_token_alone_authenticates(logged_in):
+    from conftest import Client, BASE_URL
+    c, _ = logged_in
+    token = _cookie(c, "remember_token").value
+    fresh = Client()
+    fresh.s.cookies.set("remember_token", token)
+    assert fresh.get("/").status_code == 200
+
+
+def test_tampered_remember_token_is_rejected(logged_in):
+    from conftest import Client
+    c, _ = logged_in
+    token = _cookie(c, "remember_token").value
+    fresh = Client()
+    fresh.s.cookies.set("remember_token", token[:-4] + ("0000" if not token.endswith("0000") else "1111"))
+    r = fresh.get("/")
+    assert r.status_code == 302 and r.headers["Location"].startswith("/login")
+
+
+def test_logout_invalidates_remember_cookie(logged_in):
+    c, _ = logged_in
+    c.get("/logout")
+    r = c.get("/")
+    assert r.status_code == 302 and r.headers["Location"].startswith("/login")
+
+
+def test_session_and_remember_cookies_are_httponly(logged_in):
+    c, _ = logged_in
+    for name in ("session", "remember_token"):
+        rest = {k.lower() for k in _cookie(c, name)._rest}
+        assert "httponly" in rest
+
+
+def test_next_parameter_is_url_encoded_path(client):
+    r = client.get("/logout")
+    assert r.headers["Location"] == "/login?next=%2Flogout"
+    r = client.post("/", data={"note": "x"})
+    assert r.headers["Location"] == "/login?next=%2F"
+
+
+def test_delete_note_malformed_or_missing_id_is_server_error(logged_in):
+    c, _ = logged_in
+    assert c.post("/delete-note", data="not json").status_code == 500
+    assert c.post("/delete-note", data=json.dumps({"other": 1})).status_code == 500
+
+
+def test_signup_missing_fields_is_server_error(client):
+    r = client.post("/sign-up", data={"email": new_email(), "password1": "abcdefgh", "password2": "abcdefgh"})
+    assert r.status_code == 500
+
+
+def test_signup_length_counts_characters_not_bytes(client):
+    # 2 unicode characters are enough for a first name (4 bytes)
+    r = client.signup(new_email(), name="éé")
+    assert r.status_code == 302 and r.headers["Location"] == "/"
+
+
+def test_method_not_allowed_on_logout_and_signup_and_home(client):
+    assert client.post("/logout").status_code == 405
+    assert client.req("DELETE", "/sign-up").status_code == 405
+    assert client.req("DELETE", "/login").status_code == 405
+
+
+def test_allow_header_on_405(client):
+    r = client.get("/delete-note")
+    assert r.status_code == 405
+    assert "POST" in r.headers["Allow"]
+    r = client.req("OPTIONS", "/login")
+    for m in ("GET", "POST", "OPTIONS"):
+        assert m in r.headers["Allow"]
+
+
+def test_pages_are_html_content_type(client, logged_in):
+    assert "text/html" in client.get("/login").headers["Content-Type"]
+    assert "text/html" in client.get("/sign-up").headers["Content-Type"]
+    c, _ = logged_in
+    assert "text/html" in c.get("/").headers["Content-Type"]
+
+
+def test_static_index_js_defines_delete_note(client):
+    r = client.get("/static/index.js")
+    assert r.status_code == 200
+    assert "javascript" in r.headers["Content-Type"]
+    assert "function deleteNote" in r.text and "/delete-note" in r.text
+
+
+def test_note_post_response_is_200_page_with_flash_and_note(logged_in):
+    c, _ = logged_in
+    r = c.post("/", data={"note": "posted-inline-1"})
+    assert r.status_code == 200
+    t = text(r)
+    assert "Note added!" in t and "posted-inline-1" in t
+    # flash consumed by the POST render
+    assert "Note added!" not in text(c.get("/"))
+
+
+def test_signed_up_user_cannot_see_others_notes_after_relogin(logged_in):
+    from conftest import Client
+    c, _ = logged_in
+    c.post("/", data={"note": "persisted-note-77"})
+    again = Client()
+    again.login(_)
+    assert "persisted-note-77" in text(again.get("/"))
