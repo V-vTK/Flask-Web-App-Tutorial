@@ -1,0 +1,16 @@
+.git
+.agent-*
+.agent-tests
+.agent-venv
+.pytest_cache
+tests
+node_modules
+venv
+.venv
+__pycache__
+*.pyc
+instance
+*.db
+.env
+.vscode
+README.md
