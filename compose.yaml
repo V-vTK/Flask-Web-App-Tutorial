@@ -3,14 +3,14 @@ services:
     build: .
     environment:
       PORT: "5001"
-      WEB_CONCURRENCY: "${WEB_CONCURRENCY:-2}"
+      SECRET_KEY: "${SECRET_KEY:-hjshjhdjah kjshkjdhjs}"
     ports:
       - "${HOST_PORT:-5001}:5001"
     volumes:
       - app-data:/app/instance
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:5001/login', timeout=3)"]
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:5001/login').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
       timeout: 5s
       retries: 3

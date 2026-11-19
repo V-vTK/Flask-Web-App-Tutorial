@@ -1,6 +1,4 @@
 .vscode
-website/__pycache__
-website/database.db
 *.db
 
 # agent-lab artifacts and build junk
@@ -19,3 +17,7 @@ venv/
 instance/
 .env
 !.env.example
+
+# node
+dist/
+*.tsbuildinfo

@@ -1,0 +1,1 @@
+{"install": "npm ci && npm run build && python3 -m venv .agent-venv && .agent-venv/bin/pip install -q pytest requests pytest-playwright beautifulsoup4 && .agent-venv/bin/playwright install chromium", "start": "node dist/server.js", "port": 5001, "healthPath": "/login"}
