@@ -1,0 +1,180 @@
+{
+  "kinds": [
+    "frontend",
+    "backend"
+  ],
+  "run": {
+    "install": "python3 -m venv .agent-venv && .agent-venv/bin/pip install -q -r requirements.txt pytest requests pytest-playwright beautifulsoup4 && .agent-venv/bin/playwright install chromium",
+    "start": ".agent-venv/bin/flask --app main run --host 0.0.0.0 --port $PORT",
+    "port": 5001,
+    "healthPath": "/login"
+  },
+  "behaviours": [
+    {
+      "id": "login-page",
+      "kind": "frontend",
+      "description": "GET /login renders the login form with email and password fields"
+    },
+    {
+      "id": "login-ok",
+      "kind": "backend",
+      "description": "POST /login with valid credentials redirects to / and flashes 'Logged in successfully!'"
+    },
+    {
+      "id": "login-bad-password",
+      "kind": "backend",
+      "description": "POST /login with wrong password shows 'Incorrect password, try again.'"
+    },
+    {
+      "id": "login-unknown-email",
+      "kind": "backend",
+      "description": "POST /login with unknown email shows 'Email does not exist.'"
+    },
+    {
+      "id": "logout",
+      "kind": "backend",
+      "description": "GET /logout when logged in redirects to /login; when anonymous redirects to /login?next=..."
+    },
+    {
+      "id": "signup-page",
+      "kind": "frontend",
+      "description": "GET /sign-up renders the sign-up form"
+    },
+    {
+      "id": "signup-ok",
+      "kind": "backend",
+      "description": "POST /sign-up with valid data creates the user with a hashed password, logs in, flashes 'Account created!' and redirects to /"
+    },
+    {
+      "id": "signup-validation",
+      "kind": "backend",
+      "description": "Sign-up rejects duplicate email, email <4 chars, first name <2 chars, mismatched passwords, password <7 chars with the specific flash messages"
+    },
+    {
+      "id": "home-auth",
+      "kind": "backend",
+      "description": "GET / requires login; anonymous users are redirected to /login"
+    },
+    {
+      "id": "note-add",
+      "kind": "backend",
+      "description": "POST / with non-empty note stores it, flashes 'Note added!' and lists it on the page"
+    },
+    {
+      "id": "note-empty",
+      "kind": "backend",
+      "description": "POST / with empty note flashes 'Note is too short!' and stores nothing"
+    },
+    {
+      "id": "note-delete",
+      "kind": "backend",
+      "description": "POST /delete-note with JSON noteId deletes own note and returns {}; other users' notes are untouched"
+    },
+    {
+      "id": "ui-flow",
+      "kind": "frontend",
+      "description": "In the browser a user can sign up, add a note, delete it via the UI button, log out and log back in"
+    },
+    {
+      "id": "home-empty-nav",
+      "kind": "backend",
+      "description": "Home page shows empty notes list and authenticated navigation (Logout, no Login/Sign Up)"
+    },
+    {
+      "id": "notes-private",
+      "kind": "backend",
+      "description": "Users only see their own notes"
+    },
+    {
+      "id": "note-escaping",
+      "kind": "backend",
+      "description": "Note text is HTML-escaped on render"
+    },
+    {
+      "id": "note-order",
+      "kind": "backend",
+      "description": "Notes are listed in insertion order"
+    },
+    {
+      "id": "flash-categories",
+      "kind": "backend",
+      "description": "Success flashes use alert-success, error flashes alert-danger; flashes show once"
+    },
+    {
+      "id": "signup-precedence",
+      "kind": "backend",
+      "description": "Sign-up validation precedence and length boundaries"
+    },
+    {
+      "id": "auth-cookies",
+      "kind": "backend",
+      "description": "Login sets session and remember_token cookies; passwords are case-sensitive"
+    },
+    {
+      "id": "http-errors",
+      "kind": "backend",
+      "description": "Unknown route 404, wrong method 405, static index.js served"
+    }
+  ],
+  "layers": [
+    {
+      "id": "rest",
+      "kind": "rest",
+      "tool": "pytest + requests",
+      "command": ".agent-venv/bin/pytest .agent-tests/rest",
+      "covers": [
+        "login-ok",
+        "login-bad-password",
+        "login-unknown-email",
+        "logout",
+        "signup-ok",
+        "signup-validation",
+        "home-auth",
+        "note-add",
+        "note-empty",
+        "note-delete",
+        "home-empty-nav",
+        "notes-private",
+        "note-escaping",
+        "note-order",
+        "flash-categories",
+        "signup-precedence",
+        "auth-cookies",
+        "http-errors"
+      ]
+    },
+    {
+      "id": "playwright",
+      "kind": "playwright",
+      "tool": "playwright",
+      "command": ".agent-venv/bin/pytest .agent-tests/playwright",
+      "covers": [
+        "ui-flow",
+        "login-page",
+        "signup-page",
+        "note-add",
+        "note-delete"
+      ]
+    },
+    {
+      "id": "html",
+      "kind": "html",
+      "tool": "pytest + beautifulsoup",
+      "command": ".agent-venv/bin/pytest .agent-tests/html",
+      "covers": [
+        "login-page",
+        "signup-page"
+      ]
+    }
+  ],
+  "skipped": [
+    {
+      "layer": "cli",
+      "reason": "No command-line interface beyond starting the server"
+    },
+    {
+      "layer": "library",
+      "reason": "Not a reusable library; behaviour is exposed over HTTP"
+    }
+  ]
+}

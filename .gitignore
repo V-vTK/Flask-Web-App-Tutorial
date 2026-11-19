@@ -1,3 +1,21 @@
 .vscode
 website/__pycache__
 website/database.db
+*.db
+
+# agent-lab artifacts and build junk
+.agent-venv/
+.agent-tests/test-results/
+.agent-tests/playwright-report/
+.agent-tests/node_modules/
+test-results/
+playwright-report/
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+instance/
+.env
+!.env.example
